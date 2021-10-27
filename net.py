@@ -1,19 +1,12 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report
-from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.metrics import BinaryAccuracy
-from keras import initializers, metrics
-from keras.optimizers import rmsprop_v2
-from sklearn.preprocessing import LabelEncoder
 from sktime.utils.data_io import load_from_arff_to_dataframe
 import matplotlib.pyplot as plt
-import matplotlib.colors as clr
-from keras.preprocessing import image
 from keras.layers import *
-from numpy import floor, invert
+from keras.backend import set_session
+from numpy import isnan
 from tensorflow.keras.utils import to_categorical
 
 
@@ -38,19 +31,25 @@ def generate_image(series, width, height, color_scale):
     v_scale = half_width / max_velocity
     a_scale = half_height / max_acceleration
     for i in range(len(acceleration)):
+        if isnan(velocity[i]) or isnan(acceleration[i]):
+            continue
         velocity[i] = int(velocity[i] * v_scale + half_width)
-    for i in range(len(acceleration)):
         acceleration[i] = int(acceleration[i] * a_scale + half_height)
 
     array = np.zeros([height, width, 1], np.int32)
     for i in range(len(acceleration)):
+        if isnan(velocity[i]) or isnan(acceleration[i]):
+            continue
         if array[velocity[i], acceleration[i], 0] < color_scale:
             array[velocity[i], acceleration[i], 0] += 1
+
+    # plt.imshow(array, cmap="gray_r")
+    # plt.show()
 
     return array
 
 
-def build_model(width, height):
+def build_model(width, height, class_num):
     return Sequential([
         Conv2D(32, (3, 3), activation='relu', input_shape=(width, height, 1)),
         MaxPooling2D(),
@@ -63,8 +62,7 @@ def build_model(width, height):
         
         Flatten(),
         Dense(128, activation='relu'),
-        Dropout(0.3),
-        Dense(4, activation='softmax')
+        Dense(class_num, activation='softmax')
     ])
 
 
@@ -73,24 +71,26 @@ if __name__ == "__main__":
     height = 33
     color_scale = 40
 
-    xtrain, ytrain = load_from_arff_to_dataframe('./test_data/Rock/Rock_TRAIN.arff')
+    xtrain, ytrain = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectoriesDimension1_TRAIN.arff')
     xtrain = [generate_image(x.values.tolist(), width, height, color_scale) for x in xtrain['dim_0']]
     xtrain = np.array(xtrain)
 
     ytrain = np.array([int(x) - 1 for x in ytrain])
-    ytrain = to_categorical(ytrain, 4)
+    class_num = max(ytrain) + 1
+    print(class_num)
+    ytrain = to_categorical(ytrain, class_num)
 
-    model = build_model(width, height)
+    model = build_model(width, height, class_num)
     model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
     model.fit(xtrain, ytrain, epochs=200, batch_size=128)
 
 
-    xtest, ytest = load_from_arff_to_dataframe('./test_data/Rock/Rock_TEST.arff')
+    xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectoriesDimension1_TEST.arff')
     xtest = [generate_image(x.values.tolist(), width, height, color_scale) for x in xtest['dim_0']]
     xtest = np.array(xtest)
 
     ytest = np.array([int(x) - 1 for x in ytest])
-    ytest = to_categorical(ytest, 4)
+    ytest = to_categorical(ytest, class_num)
     
     evaluations = model.evaluate(xtrain, ytrain)
     evaluations = model.evaluate(xtest, ytest)
