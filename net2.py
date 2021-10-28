@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from keras.models import Sequential
 from sktime.utils.data_io import load_from_arff_to_dataframe
 import matplotlib.pyplot as plt
@@ -8,41 +7,18 @@ from numpy import floor, isnan, mean, log
 from tensorflow.keras.utils import to_categorical
 
 
-def generate_image(series, width, height, color_scale):
-    max_velocity = 0
-    max_acceleration = 0
-    velocity = []
-    acceleration = []
-    for i in range(len(series) - 1):
-        v = series[i+1] - series[i]
-        if abs(v) > max_velocity:
-            max_velocity = abs(v)
-        velocity.append(v)
-    for i in range(len(velocity) - 1):
-        a = velocity[i+1] - velocity[i]
-        if abs(a) > max_acceleration:
-            max_acceleration = abs(a)
-        acceleration.append(a)
+def generate_image(series, width, *args):
+    array = np.empty([width, width, 1], np.int32)
+    series = list(filter(lambda s: not isnan(s), series))
+    lenght = len(series)
+    widthScale = lenght / width
 
-    half_width = int(width / 2)
-    half_height = int(height / 2)
-    v_scale = half_width / max_velocity
-    a_scale = half_height / max_acceleration
-    for i in range(len(acceleration)):
-        if isnan(velocity[i]) or isnan(acceleration[i]):
-            continue
-        velocity[i] = int(velocity[i] * v_scale + half_width)
-        acceleration[i] = int(acceleration[i] * a_scale + half_height)
- 
-    array = np.zeros([height, width, 1], np.int32)
-    for i in range(len(acceleration)):
-        if isnan(velocity[i]) or isnan(acceleration[i]):
-            continue
-        if array[velocity[i], acceleration[i], 0] < color_scale:
-            array[velocity[i], acceleration[i], 0] += 1
-
-    # plt.imshow(array, cmap="gray_r")
-    # plt.show()
+    series = [mean(series[int(i * widthScale):int((i + 1) * widthScale)]) for i in range(width)]
+    
+    for i in range(width):
+        for j in range(width):
+            x = series[i] * series[j]
+            array[i,j,0] = x
 
     return array
 
@@ -58,18 +34,18 @@ def build_model(width, height, class_num):
         MaxPooling2D(),
         
         Flatten(),
-        Dense(128, activation='relu'),
+        Dense(256, activation='relu'),
+        Dropout(0.1),
         Dense(class_num, activation='softmax')
     ])
 
 
 if __name__ == "__main__":
-    width = 33
-    height = 33
-    color_scale = 40
+    width = 35
+    height = 35
 
     xtrain, ytrain = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectoriesDimension1_TRAIN.arff')
-    xtrain = [generate_image(x.values.tolist(), width, height, color_scale) for x in xtrain['dim_0']]
+    xtrain = [generate_image(x.values.tolist(), width) for x in xtrain['dim_0']]
     xtrain = np.array(xtrain)
 
     ytrain = np.array([int(x) - 1 for x in ytrain])
@@ -82,7 +58,7 @@ if __name__ == "__main__":
 
 
     xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectoriesDimension1_TEST.arff')
-    xtest = [generate_image(x.values.tolist(), width, height, color_scale) for x in xtest['dim_0']]
+    xtest = [generate_image(x.values.tolist(), width) for x in xtest['dim_0']]
     xtest = np.array(xtest)
 
     ytest = np.array([int(x) - 1 for x in ytest])
