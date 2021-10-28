@@ -3,28 +3,49 @@ from keras.models import Sequential
 from sktime.utils.data_io import load_from_arff_to_dataframe
 import matplotlib.pyplot as plt
 from keras.layers import *
-from numpy import floor, isnan, mean, log
+from numpy import NaN, floor, isnan, mean, log
 from tensorflow.keras.utils import to_categorical
+from scipy import interpolate
+from skimage.transform import resize
+
+
+
+def remove_nans(series):
+    result = []
+    for i in range(len(series[0])):
+        no_nans = True
+        l = []
+        for j in range(len(series)):
+            v = series[j][i]
+            if isnan(v):
+                no_nans = False
+                break
+            l.append(v)
+        if no_nans:
+            result.append(l)
+    return np.array(result)
+
+def scale(series, width):
+    return resize(series, (width, series.shape[1]))
 
 
 def generate_image(series, width, *args):
-    array = np.empty([width, width, 1], np.int32)
-    series = list(filter(lambda s: not isnan(s), series))
-    lenght = len(series)
-    widthScale = lenght / width
+    dimensions = len(series)
+    array = np.empty([width, width, dimensions], np.int32)
 
-    series = [mean(series[int(i * widthScale):int((i + 1) * widthScale)]) for i in range(width)]
+    series = remove_nans(series)
+    series = scale(series, width)
     
-    for i in range(width):
-        for j in range(width):
-            x = series[i] * series[j]
-            array[i,j,0] = x
+    for dim in range(dimensions):
+        for i in range(width):
+            for j in range(width):
+                array[i,j,dim] = series[i, dim] * series[j, dim]
 
     return array
 
-def build_model(width, height, class_num):
+def build_model(width, height, class_num, dim_num):
     return Sequential([
-        Conv2D(32, (3, 3), activation='relu', input_shape=(width, height, 1)),
+        Conv2D(64, (3, 3), activation='relu', input_shape=(width, height, dim_num)),
         MaxPooling2D(),
 
         Conv2D(64, (3, 3), activation='relu'),
@@ -44,21 +65,22 @@ if __name__ == "__main__":
     width = 35
     height = 35
 
-    xtrain, ytrain = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectoriesDimension1_TRAIN.arff')
-    xtrain = [generate_image(x.values.tolist(), width) for x in xtrain['dim_0']]
+    xtrain, ytrain = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TRAIN.arff')
+    xtrain = [generate_image(x, width) for x in xtrain.values.tolist()]
     xtrain = np.array(xtrain)
+
 
     ytrain = np.array([int(x) - 1 for x in ytrain])
     class_num = max(ytrain) + 1
     ytrain = to_categorical(ytrain, class_num)
 
-    model = build_model(width, height, class_num)
+    model = build_model(width, height, class_num, xtrain.shape[3])
     model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-    model.fit(xtrain, ytrain, epochs=150, batch_size=128)
+    model.fit(xtrain, ytrain, epochs=100, batch_size=128)
 
 
-    xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectoriesDimension1_TEST.arff')
-    xtest = [generate_image(x.values.tolist(), width) for x in xtest['dim_0']]
+    xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TEST.arff')
+    xtest = [generate_image(x, width) for x in xtest.values.tolist()]
     xtest = np.array(xtest)
 
     ytest = np.array([int(x) - 1 for x in ytest])
