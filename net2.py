@@ -36,9 +36,9 @@ def generate_image(series, width, *args):
     series = remove_nans(series)
     series = scale(series, width)
     
-    for dim in range(dimensions):
-        for i in range(width):
-            for j in range(width):
+    for i in range(width):
+        for j in range(width):
+            for dim in range(dimensions):
                 array[i,j,dim] = series[i, dim] * series[j, dim]
 
     return array
