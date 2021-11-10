@@ -3,7 +3,7 @@ from keras.models import Sequential
 from sktime.utils.data_io import load_from_arff_to_dataframe
 import matplotlib.pyplot as plt
 from keras.layers import *
-from numpy import NaN, floor, isnan, mean, log
+from numpy import NaN, floor, isnan, mean, log, uint8
 from tensorflow.keras.utils import to_categorical
 from scipy import interpolate
 from skimage.transform import resize
@@ -41,6 +41,9 @@ def generate_image(series, width, *args):
             for dim in range(dimensions):
                 array[i,j,dim] = series[i, dim] * series[j, dim]
 
+    # plt.imshow(array.astype(uint8), interpolation='nearest')
+    # plt.show()
+
     return array
 
 def build_model(width, height, class_num, dim_num):
@@ -69,7 +72,6 @@ if __name__ == "__main__":
     xtrain = [generate_image(x, width) for x in xtrain.values.tolist()]
     xtrain = np.array(xtrain)
 
-
     ytrain = np.array([int(x) - 1 for x in ytrain])
     class_num = max(ytrain) + 1
     ytrain = to_categorical(ytrain, class_num)
@@ -77,7 +79,6 @@ if __name__ == "__main__":
     model = build_model(width, height, class_num, xtrain.shape[3])
     model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
     model.fit(xtrain, ytrain, epochs=100, batch_size=128)
-
 
     xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TEST.arff')
     xtest = [generate_image(x, width) for x in xtest.values.tolist()]
