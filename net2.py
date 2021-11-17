@@ -31,7 +31,7 @@ def scale(series, width):
 
 def generate_image(series, width, *args):
     dimensions = len(series)
-    array = np.empty([width, width, dimensions], np.int32)
+    array = np.empty([width, width, dimensions], np.float64)
 
     series = remove_nans(series)
     series = scale(series, width)
@@ -65,8 +65,8 @@ def build_model(width, height, class_num, dim_num):
 
 
 if __name__ == "__main__":
-    width = 35
-    height = 35
+    width = 50
+    height = 50
 
     xtrain, ytrain = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TRAIN.arff')
     xtrain = [generate_image(x, width) for x in xtrain.values.tolist()]
@@ -77,8 +77,8 @@ if __name__ == "__main__":
     ytrain = to_categorical(ytrain, class_num)
 
     model = build_model(width, height, class_num, xtrain.shape[3])
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-    model.fit(xtrain, ytrain, epochs=100, batch_size=128)
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.fit(xtrain, ytrain, epochs=110, batch_size=128)
 
     xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TEST.arff')
     xtest = [generate_image(x, width) for x in xtest.values.tolist()]

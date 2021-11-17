@@ -101,7 +101,7 @@ if __name__ == "__main__":
     ytrain = to_categorical(ytrain, class_num)
 
     model = build_model(width, height, class_num, xtrain.shape[3])
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     model.fit(xtrain, ytrain, epochs=100, batch_size=128)
 
     xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TEST.arff')

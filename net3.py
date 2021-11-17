@@ -31,7 +31,7 @@ def scale(series, width):
 
 def generate_image(series, width, *args):
     dimensions = len(series)
-    array = np.empty([1, width, dimensions], np.int32)
+    array = np.empty([1, width, dimensions], np.float64)
 
     series = remove_nans(series)
     series = scale(series, width)
@@ -49,7 +49,7 @@ def build_model(width, class_num, dim_num):
     return Sequential([
         Conv2D(64, (1, 3), activation='relu', input_shape=(1, width, dim_num)),
         MaxPooling2D((1,2)),
-        
+
         Conv2D(64, (1, 3), activation='relu'),
         MaxPooling2D((1,2)),
 
@@ -64,7 +64,7 @@ def build_model(width, class_num, dim_num):
 
 
 if __name__ == "__main__":
-    width = 200
+    width = 400
 
     xtrain, ytrain = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TRAIN.arff')
     xtrain = [generate_image(x, width) for x in xtrain.values.tolist()]
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     ytrain = to_categorical(ytrain, class_num)
 
     model = build_model(width, class_num, xtrain.shape[3])
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     model.fit(xtrain, ytrain, epochs=100, batch_size=128)
 
     xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TEST.arff')
