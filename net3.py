@@ -1,13 +1,14 @@
-import numpy as np
-from keras.models import Sequential
-from sktime.utils.data_io import load_from_arff_to_dataframe
 import matplotlib.pyplot as plt
+import numpy as np
 from keras.layers import *
-from numpy import NaN, floor, isnan, mean, log, uint8
-from tensorflow.keras.utils import to_categorical
-from scipy import interpolate
+from keras.models import Sequential
+from numpy import isnan
 from skimage.transform import resize
+from sktime.utils.data_io import load_from_arff_to_dataframe
+from tensorflow.keras.utils import to_categorical
 
+
+SHOW_PLOTS = True
 
 
 def remove_nans(series):
@@ -25,6 +26,7 @@ def remove_nans(series):
             result.append(l)
     return np.array(result)
 
+
 def scale(series, width):
     return resize(series, (width, series.shape[1]))
 
@@ -40,10 +42,16 @@ def generate_image(series, width, *args):
         for dim in range(dimensions):
             array[0,j,dim] = series[j, dim]
 
-    # plt.imshow(array.astype(uint8), interpolation='nearest')
-    # plt.show()
+    if SHOW_PLOTS:
+        fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(12, 3))
+        for d in range(dimensions):
+            im = axs[d].pcolormesh(array[:, :, d], cmap="gray")
+        fig.subplots_adjust(right=0.8)
+        fig.colorbar(im, cax=fig.add_axes([0.85, 0.15, 0.05, 0.7]))
+        plt.show()
 
     return array
+
 
 def build_model(width, class_num, dim_num):
     return Sequential([
