@@ -53,8 +53,8 @@ def generate_image(series, width, *args):
         for i in range(len(velocity)):
                 array[0, i, d] = velocity[i]
 
-    plt.imshow(array.astype(uint8), interpolation='nearest')
-    plt.show()
+    # plt.imshow(array.astype(uint8), interpolation='nearest')
+    # plt.show()
 
     return array
 
@@ -75,29 +75,40 @@ def build_model(width, class_num, dim_num):
         Dense(class_num, activation='softmax')
     ])
 
+def process_ytrain(ytrain):
+    ymap = {}
+    yarray = []
+    num = 0
+    for y in ytrain:
+        if y not in ymap:
+            ymap[y] = num
+            num += 1
+        yarray.append(ymap[y])
+
+    return (ymap, to_categorical(np.array(yarray)), num)
+
+def process_ytest(ymap, ytest):
+    return to_categorical(np.array([ymap[v] for v in ytest]))
 
 if __name__ == "__main__":
     width = 400
-    dataset = "CharacterTrajectories"
+    dataset = "RefrigerationDevices"
 
     xtrain, ytrain = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TRAIN.arff")
     xtrain = [generate_image(x, width) for x in xtrain.values.tolist()]
     xtrain = np.array(xtrain)
 
-    ytrain = np.array([int(x) - 1 for x in ytrain])
-    class_num = max(ytrain) + 1
-    ytrain = to_categorical(ytrain, class_num)
+    ymap, ytrain, class_num = process_ytrain(ytrain)
 
     model = build_model(width, class_num, xtrain.shape[3])
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit(xtrain, ytrain, epochs=120, batch_size=128)
+    model.fit(xtrain, ytrain, epochs=100, batch_size=128)
 
     xtest, ytest = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TEST.arff")
     xtest = [generate_image(x, width) for x in xtest.values.tolist()]
     xtest = np.array(xtest)
 
-    ytest = np.array([int(x) - 1 for x in ytest])
-    ytest = to_categorical(ytest, class_num)
+    ytest = process_ytest(ymap, ytest)
     
     evaluations = model.evaluate(xtrain, ytrain)
     evaluations = model.evaluate(xtest, ytest)

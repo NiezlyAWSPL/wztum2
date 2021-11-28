@@ -84,30 +84,41 @@ def generate_images(series: np.ndarray) -> np.ndarray:
     series = np.array([generate_image(x, size) for x in series])
     return series
 
+def process_ytrain(ytrain):
+    ymap = {}
+    yarray = []
+    num = 0
+    for y in ytrain:
+        if y not in ymap:
+            ymap[y] = num
+            num += 1
+        yarray.append(ymap[y])
+
+    return (ymap, to_categorical(np.array(yarray)), num)
+
+def process_ytest(ymap, ytest):
+    return to_categorical(np.array([ymap[v] for v in ytest]))
 
 if __name__ == "__main__":
     size = 30
-    dataset = "CharacterTrajectories"
+    dataset = "RefrigerationDevices"
 
     xtrain, ytrain = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TRAIN.arff")
     xtrain = process_series_data(xtrain)
     xtrain = generate_images(xtrain)
 
-    ytrain = np.array([int(x) - 1 for x in ytrain])
     dim_num = xtrain.shape[-1]
-    class_num = max(ytrain) + 1
-    ytrain = to_categorical(ytrain, class_num)
+    ymap, ytrain, class_num = process_ytrain(ytrain)
 
     model = build_model(size, class_num, dim_num)
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit(xtrain, ytrain, epochs=20, batch_size=96)
+    model.fit(xtrain, ytrain, epochs=80, batch_size=96)
 
     xtest, ytest = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TEST.arff")
     xtest = process_series_data(xtest)
     xtest = generate_images(xtest)
 
-    ytest = np.array([int(x) - 1 for x in ytest])
-    ytest = to_categorical(ytest, class_num)
+    ytest = process_ytest(ymap, ytest)
 
     evaluations = model.evaluate(xtest, ytest)
     print(evaluations)
