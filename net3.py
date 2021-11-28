@@ -73,8 +73,9 @@ def build_model(width, class_num, dim_num):
 
 if __name__ == "__main__":
     width = 400
+    dataset = "CharacterTrajectories"
 
-    xtrain, ytrain = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TRAIN.arff')
+    xtrain, ytrain = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TRAIN.arff")
     xtrain = [generate_image(x, width) for x in xtrain.values.tolist()]
     xtrain = np.array(xtrain)
 
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     model.fit(xtrain, ytrain, epochs=100, batch_size=128)
 
-    xtest, ytest = load_from_arff_to_dataframe('./test_data/CharacterTrajectories/CharacterTrajectories_TEST.arff')
+    xtest, ytest = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TEST.arff")
     xtest = [generate_image(x, width) for x in xtest.values.tolist()]
     xtest = np.array(xtest)
 
