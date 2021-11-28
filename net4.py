@@ -55,10 +55,6 @@ def generate_image(series, width, *args):
         for i in range(len(velocity)):
                 array[0, i, d] = velocity[i]
 
-<<<<<<< HEAD
-    # plt.imshow(array.astype(uint8), interpolation='nearest')
-    # plt.show()
-=======
     if SHOW_PLOTS:
         fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(12, 3))
         for d in range(dimensions):
@@ -66,7 +62,6 @@ def generate_image(series, width, *args):
         fig.subplots_adjust(right=0.8)
         fig.colorbar(im, cax=fig.add_axes([0.85, 0.15, 0.05, 0.7]))
         plt.show()
->>>>>>> 05593e2c8ee3406d3d7f06cb3e57d5a0b8b02df8
 
     return array
 
