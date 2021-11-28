@@ -1,11 +1,14 @@
 import numpy as np
-import pandas as pd
-from keras.models import Sequential
-from sktime.utils.data_io import load_from_arff_to_dataframe
-import matplotlib.pyplot as plt
 from keras.layers import *
-from numpy import floor, isnan, mean, log, uint8
+from keras.models import Sequential
+from matplotlib import pyplot as plt
+from numpy import isnan
+from sktime.utils.data_io import load_from_arff_to_dataframe
 from tensorflow.keras.utils import to_categorical
+
+
+SHOW_PLOTS = True
+
 
 def remove_nans(series):
     result = []
@@ -21,6 +24,7 @@ def remove_nans(series):
         if no_nans:
             result.append(l)
     return np.array(result)
+
 
 def generate_image(series, width, height, color_scale):
     dimensions = len(series)
@@ -62,12 +66,20 @@ def generate_image(series, width, height, color_scale):
         for i in range(len(acceleration)):
             velocity[i] = int(velocity[i] * v_scale + half_width)
             acceleration[i] = int(acceleration[i] * a_scale + half_height)
-
         for i in range(len(acceleration)):
             if array[velocity[i], acceleration[i], d] < color_scale:
                 array[velocity[i], acceleration[i], d] += 1
 
+    if SHOW_PLOTS:
+        fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(12, 3))
+        for d in range(dimensions):
+            im = axs[d].pcolormesh(array[:, :, d], cmap="gray")
+        fig.subplots_adjust(right=0.8)
+        fig.colorbar(im, cax=fig.add_axes([0.85, 0.15, 0.05, 0.7]))
+        plt.show()
+
     return array
+
 
 def build_model(width, height, class_num, dim_num):
     return Sequential([

@@ -6,7 +6,7 @@ from keras.models import Sequential
 from sktime.utils.data_io import load_from_arff_to_dataframe
 from tensorflow.keras.utils import to_categorical
 
-SHOW_PLOTS = False
+SHOW_PLOTS = True
 
 MAX_Z_SCORE = 3
 MAX_Z_SCORE_RANGE = [[-MAX_Z_SCORE, MAX_Z_SCORE], [-MAX_Z_SCORE, MAX_Z_SCORE]]
