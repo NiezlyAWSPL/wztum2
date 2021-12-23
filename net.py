@@ -5,9 +5,10 @@ from matplotlib import pyplot as plt
 from numpy import isnan
 from sktime.utils.data_io import load_from_arff_to_dataframe
 from tensorflow.keras.utils import to_categorical
+from sys import argv
 
 
-SHOW_PLOTS = True
+SHOW_PLOTS = len(argv) > 2 and argv[2] == '--plot'
 
 
 def remove_nans(series):
@@ -71,7 +72,7 @@ def generate_image(series, width, height, color_scale):
                 array[velocity[i], acceleration[i], d] += 1
 
     if SHOW_PLOTS:
-        fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(12, 3))
+        fig, axs = plt.subplots(nrows=1, ncols=series.shape[1], sharex=True, figsize=(12, 9/series.shape[1]))
         for d in range(dimensions):
             im = axs[d].pcolormesh(array[:, :, d], cmap="gray")
         fig.subplots_adjust(right=0.8)
@@ -114,13 +115,15 @@ def process_ytest(ymap, ytest):
     return to_categorical(np.array([ymap[v] for v in ytest]))
 
 if __name__ == "__main__":
-    width = 33
-    height = 33
+    width = 34
+    height = 34
     color_scale = 40
 
-    dataset = "RefrigerationDevices"
+    dataset = argv[1]
 
     xtrain, ytrain = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TRAIN.arff")
+    width = width //2 * 2 + 1
+    height = height //2 * 2 + 1
     xtrain = [generate_image(x, width, height, color_scale) for x in xtrain.values.tolist()]
     xtrain = np.array(xtrain)
 

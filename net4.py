@@ -6,9 +6,10 @@ from numpy import isnan
 from skimage.transform import resize
 from sktime.utils.data_io import load_from_arff_to_dataframe
 from tensorflow.keras.utils import to_categorical
+from sys import argv
 
 
-SHOW_PLOTS = True
+SHOW_PLOTS = len(argv) > 2 and argv[2] == '--plot'
 
 
 def remove_nans(series):
@@ -56,7 +57,7 @@ def generate_image(series, width, *args):
                 array[0, i, d] = velocity[i]
 
     if SHOW_PLOTS:
-        fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(12, 3))
+        fig, axs = plt.subplots(nrows=1, ncols=series.shape[1], sharex=True, figsize=(12, 9/series.shape[1]))
         for d in range(dimensions):
             im = axs[d].pcolormesh(array[:, :, d], cmap="gray")
         fig.subplots_adjust(right=0.8)
@@ -100,7 +101,7 @@ def process_ytest(ymap, ytest):
 
 if __name__ == "__main__":
     width = 400
-    dataset = "RefrigerationDevices"
+    dataset = argv[1]
 
     xtrain, ytrain = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TRAIN.arff")
     xtrain = [generate_image(x, width) for x in xtrain.values.tolist()]

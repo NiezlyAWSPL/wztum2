@@ -5,8 +5,9 @@ from keras.layers import *
 from keras.models import Sequential
 from sktime.utils.data_io import load_from_arff_to_dataframe
 from tensorflow.keras.utils import to_categorical
+from sys import argv
 
-SHOW_PLOTS = True
+SHOW_PLOTS = len(argv) > 2 and argv[2] == '--plot'
 
 MAX_Z_SCORE = 3
 MAX_Z_SCORE_RANGE = [[-MAX_Z_SCORE, MAX_Z_SCORE], [-MAX_Z_SCORE, MAX_Z_SCORE]]
@@ -59,7 +60,7 @@ def generate_image(series, size) -> np.ndarray:
     image = []
 
     if SHOW_PLOTS:
-        fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(12, 3))
+        fig, axs = plt.subplots(nrows=1, ncols=series.shape[1], sharex=True, figsize=(12, 9/series.shape[1]))
         ax_counter = 0
 
     for x, y in np.array(tuple(zip(diff.T, series.T))):
@@ -101,7 +102,7 @@ def process_ytest(ymap, ytest):
 
 if __name__ == "__main__":
     size = 30
-    dataset = "RefrigerationDevices"
+    dataset = argv[1]
 
     xtrain, ytrain = load_from_arff_to_dataframe(f"./test_data/{dataset}/{dataset}_TRAIN.arff")
     xtrain = process_series_data(xtrain)
