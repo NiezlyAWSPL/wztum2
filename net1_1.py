@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from keras.layers import *
 from keras.models import Sequential
-from sktime.utils.data_io import load_from_arff_to_dataframe
+from arff import load_from_arff_to_dataframe
 from tensorflow.keras.utils import to_categorical
 from sys import argv
 
